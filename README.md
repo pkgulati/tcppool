@@ -22,14 +22,20 @@ One must consume full response, before releasing the client, as socket pool does
             console.log('ERROR pool client ', request, ' Erorr ', err.code);
             return;
         }
+        var isResponseComplete = false;
         client.sendRequest(request, function (err, data) {
             if (err) {
                 console.log('error occured in ', request);
+                client.release();
             }
             else {
+                // buffer it
                 console.log('received response ' + data.toString());
-            }
-            client.release();
+                // once response is complete, set isResponseComplete true
+                isResponseComplete = true;
+                if (isResponseComplete) {
+                    client.release();
+                }
         });
     });
 ```
