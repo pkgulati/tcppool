@@ -5,28 +5,34 @@ var async = require('async');
 var server = net.createServer();
 server.on('connection', handleConnection);
 
-var max_requests_count = 100;
+// 100
+var max_requests_count = 33;
 var required_tps = 7;
 
-var pool = new SocketPool({maxConnections:6,maxQueueLength:50});
+var pool = new SocketPool({
+    idleTimeout: 20000,
+    maxConnections: 2,
+    maxQueueLength: 50,
+    maxRequestsPerConnection : 5
+});
 
 // 0 
 function handleConnection(conn) {
     var remoteAddress = conn.remoteAddress + ':' + conn.remotePort;
-   // console.log('new client connection from %s', remoteAddress);
+    // console.log('new client connection from %s', remoteAddress);
     conn.setEncoding('utf8');
     conn.on('data', onConnData);
     conn.once('close', onConnClose);
     conn.on('error', onConnError);
     function onConnData(d) {
         //console.log('connection data from %s: %j', remoteAddress, d);
-        var t = Math.random() * 5100;  
-        setTimeout(()=> {
+        var t = Math.random() * 100;
+        setTimeout(() => {
             conn.write(d.toUpperCase());
-        }, t+100);
+        }, t + 100);
     }
     function onConnClose() {
-        console.log('connection from %s closed', remoteAddress);
+        //console.log('connection from %s closed', remoteAddress);
     }
     function onConnError(err) {
         console.log('Connection %s error: %s', remoteAddress, err.message);
@@ -53,6 +59,12 @@ function sendRequest() {
             return;
         }
         console.log('sending ', request);
+        if (!client.connected) {
+            console.log('how come ');
+        }
+        if (!client.socket) {
+            console.log('how come ');
+        }
         client.sendRequest(request, function (err, data) {
             num_processed++;
             if (err) {
@@ -61,9 +73,9 @@ function sendRequest() {
                     console.log('request timed out');
                 }
             }
-            else  {
+            else {
                 var reqend = Date.now();
-                console.log('request response time including pool wait ', reqend-reqstart);
+                console.log('request response time including pool wait ', reqend - reqstart);
                 console.log('received response ' + data.toString());
             }
             client.release();
@@ -73,7 +85,7 @@ function sendRequest() {
 }
 
 var start = Date.now();
-var timer = setInterval(function() {
+var timer = setInterval(function () {
     //console.log(num_sent);
     if (num_sent < max_requests_count) {
         sendRequest();
@@ -93,9 +105,9 @@ var timer = setInterval(function() {
         console.log('rt in ms per connection ', pool.clientsCount * 1000 / current_tps);
         console.log('elapsed time secs ', elapsed_secs);
         console.log('elapsed time ms ', elapsed_ms);
-        clearInterval(timer);    
+        clearInterval(timer);
     }
-}, 22);
+}, 500);
 
 
 

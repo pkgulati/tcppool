@@ -1,0 +1,171 @@
+server listening to {"address":"::","family":"IPv6","port":8080}
+clientsCount up  1 5934b84c-c8a6-47f2-9f93-ac3557239d81
+clientsCount up  2 d96361d4-d5e5-4eab-969e-b8df4738c44a
+client connected  d96361d4-d5e5-4eab-969e-b8df4738c44a
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+client connected  5934b84c-c8a6-47f2-9f93-ac3557239d81
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+sending  ab-1
+request response time including pool wait  194
+received response AB-1
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+sending  ab-2
+request response time including pool wait  167
+received response AB-2
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+sending  ab-3
+request response time including pool wait  190
+received response AB-3
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+sending  ab-4
+request response time including pool wait  128
+received response AB-4
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+sending  ab-5
+request response time including pool wait  163
+received response AB-5
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+sending  ab-6
+request response time including pool wait  166
+received response AB-6
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+sending  ab-7
+request response time including pool wait  128
+received response AB-7
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+sending  ab-8
+request response time including pool wait  185
+received response AB-8
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+sending  ab-9
+request response time including pool wait  127
+received response AB-9
+release client  d96361d4-d5e5-4eab-969e-b8df4738c44a
+close connection as maxRequestsPerConnection reached  d96361d4-d5e5-4eab-969e-b8df4738c44a
+clientsCount down on release and maxRequests reached  1 d96361d4-d5e5-4eab-969e-b8df4738c44a
+sending  ab-10
+request response time including pool wait  139
+received response AB-10
+release client  5934b84c-c8a6-47f2-9f93-ac3557239d81
+close connection as maxRequestsPerConnection reached  5934b84c-c8a6-47f2-9f93-ac3557239d81
+clientsCount down on release and maxRequests reached  0 5934b84c-c8a6-47f2-9f93-ac3557239d81
+clientsCount up  1 c65fb39a-a815-47db-93db-0a93ca14d1b7
+client connected  c65fb39a-a815-47db-93db-0a93ca14d1b7
+sending  ab-11
+request response time including pool wait  173
+received response AB-11
+release client  c65fb39a-a815-47db-93db-0a93ca14d1b7
+sending  ab-12
+request response time including pool wait  190
+received response AB-12
+release client  c65fb39a-a815-47db-93db-0a93ca14d1b7
+sending  ab-13
+request response time including pool wait  156
+received response AB-13
+release client  c65fb39a-a815-47db-93db-0a93ca14d1b7
+sending  ab-14
+request response time including pool wait  183
+received response AB-14
+release client  c65fb39a-a815-47db-93db-0a93ca14d1b7
+sending  ab-15
+request response time including pool wait  160
+received response AB-15
+release client  c65fb39a-a815-47db-93db-0a93ca14d1b7
+close connection as maxRequestsPerConnection reached  c65fb39a-a815-47db-93db-0a93ca14d1b7
+clientsCount down on release and maxRequests reached  0 c65fb39a-a815-47db-93db-0a93ca14d1b7
+clientsCount up  1 2840ce4e-33e5-483a-9ad2-c5a7056404c3
+client connected  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+sending  ab-16
+request response time including pool wait  147
+received response AB-16
+release client  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+sending  ab-17
+request response time including pool wait  125
+received response AB-17
+release client  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+sending  ab-18
+request response time including pool wait  151
+received response AB-18
+release client  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+sending  ab-19
+request response time including pool wait  165
+received response AB-19
+release client  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+sending  ab-20
+request response time including pool wait  173
+received response AB-20
+release client  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+close connection as maxRequestsPerConnection reached  2840ce4e-33e5-483a-9ad2-c5a7056404c3
+clientsCount down on release and maxRequests reached  0 2840ce4e-33e5-483a-9ad2-c5a7056404c3
+clientsCount up  1 ba89f477-4115-4614-a872-226378bc57d0
+client connected  ba89f477-4115-4614-a872-226378bc57d0
+sending  ab-21
+request response time including pool wait  179
+received response AB-21
+release client  ba89f477-4115-4614-a872-226378bc57d0
+sending  ab-22
+request response time including pool wait  116
+received response AB-22
+release client  ba89f477-4115-4614-a872-226378bc57d0
+sending  ab-23
+request response time including pool wait  190
+received response AB-23
+release client  ba89f477-4115-4614-a872-226378bc57d0
+sending  ab-24
+request response time including pool wait  150
+received response AB-24
+release client  ba89f477-4115-4614-a872-226378bc57d0
+sending  ab-25
+request response time including pool wait  183
+received response AB-25
+release client  ba89f477-4115-4614-a872-226378bc57d0
+close connection as maxRequestsPerConnection reached  ba89f477-4115-4614-a872-226378bc57d0
+clientsCount down on release and maxRequests reached  0 ba89f477-4115-4614-a872-226378bc57d0
+clientsCount up  1 541e8442-b498-424d-a1a4-ab2afa8757eb
+client connected  541e8442-b498-424d-a1a4-ab2afa8757eb
+sending  ab-26
+request response time including pool wait  154
+received response AB-26
+release client  541e8442-b498-424d-a1a4-ab2afa8757eb
+sending  ab-27
+request response time including pool wait  108
+received response AB-27
+release client  541e8442-b498-424d-a1a4-ab2afa8757eb
+sending  ab-28
+request response time including pool wait  157
+received response AB-28
+release client  541e8442-b498-424d-a1a4-ab2afa8757eb
+sending  ab-29
+request response time including pool wait  105
+received response AB-29
+release client  541e8442-b498-424d-a1a4-ab2afa8757eb
+sending  ab-30
+request response time including pool wait  139
+received response AB-30
+release client  541e8442-b498-424d-a1a4-ab2afa8757eb
+close connection as maxRequestsPerConnection reached  541e8442-b498-424d-a1a4-ab2afa8757eb
+clientsCount down on release and maxRequests reached  0 541e8442-b498-424d-a1a4-ab2afa8757eb
+clientsCount up  1 325508a8-bccd-4eca-a9e2-c40a1f7ae014
+client connected  325508a8-bccd-4eca-a9e2-c40a1f7ae014
+sending  ab-31
+request response time including pool wait  109
+received response AB-31
+release client  325508a8-bccd-4eca-a9e2-c40a1f7ae014
+sending  ab-32
+request response time including pool wait  108
+received response AB-32
+release client  325508a8-bccd-4eca-a9e2-c40a1f7ae014
+sending  ab-33
+request response time including pool wait  122
+received response AB-33
+release client  325508a8-bccd-4eca-a9e2-c40a1f7ae014
+all response received 
+pool info total clients  1
+current tps  1.9297117127653354
+rt in ms all connections  518.2121212121212
+rt in ms per connection  518.2121212121212
+elapsed time secs  17.101
+elapsed time ms  17101
+idle time happened
+release client  325508a8-bccd-4eca-a9e2-c40a1f7ae014
+clientsCount down on release and disconnect  0 325508a8-bccd-4eca-a9e2-c40a1f7ae014

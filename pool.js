@@ -10,9 +10,11 @@ class Client {
 		this.socket = new net.Socket();
 		this.id = uuid.v4();
 		this.connected = false;
-		this.connectCallback = null;
 		this.pool = options.pool;
-		this.requestTimeout = options.requestTimeout ||  3000;
+		this.requestTimeout = options.requestTimeout || 3000;
+		this.idleTimeout = options.idleTimeout || 3000;
+		this.maxRequestsPerConnection = options.maxRequestsPerConnection || 1000;
+		this.requestsCount = 0;
 	}
 
 	connect(cb) {
@@ -23,8 +25,14 @@ class Client {
 		};
 		self.socket.once('error', connectErrorHandler);
 		self.socket.connect(this.port, this.host, function () {
-			self.connected = true;
 			self.socket.removeListener('error', connectErrorHandler);
+			if (self.idleTimeout) {
+				self.idleTimer = setTimeout(function () {
+					console.log('idle time out happend');
+					self.disconnect();
+				}, self.idleTimeout);
+			}
+			self.connected = true;
 			cb(null, self);
 		});
 	}
@@ -32,22 +40,46 @@ class Client {
 	sendRequest(buf, receiver) {
 		// reconnect
 		var self = this;
-		var requestTimer = null;
+		this.requestsCount++;
+		if (!self.socket || !self.connected) {
+			console.log('client id ', client.id);
+			var err = new Error('sendRequest on closed socket');
+			err.code = 'ERROR_SEND_ON_CLOSE_SOCKET';
+			return receiver(err);
+		}
 		self.socket.removeAllListeners('data');
 		self.socket.removeAllListeners('error');
 		self.socket.on('data', function (data) {
-			if (requestTimer) {
-				clearTimeout(requestTimer);
+			if (self.requestTimer) {
+				clearTimeout(self.requestTimer);
+			}
+			self.requestTimer = null;
+			if (self.idleTimeout) {
+				self.idleTimer = setTimeout(function () {
+					self.disconnect();
+				}, self.idleTimeout);
 			}
 			receiver(null, data);
 		});
 		self.socket.on('error', function (err) {
 			console.log('error on socket ', err.Code);
+			if (self.requestTimer) {
+				clearTimeout(requestTimer);
+				self.requestTimer = null;
+			}
+			if (self.idleTimer) {
+				clearTimeout(self.idleTimer);
+				self.idleTimer = null;
+			}
 			self.disconnect();
 		});
+		if (self.idleTimer) {
+			clearTimeout(self.idleTimer);
+			self.idleTimer = null;
+		}
 		this.socket.write(buf);
 		if (self.requestTimeout) {
-			requestTimer = setTimeout(function(){
+			self.requestTimer = setTimeout(function () {
 				console.log('request timed out');
 				var err = new Error('Request Timeout occured');
 				err.code = 'ERROR_REQUEST_TIME_OUT';
@@ -71,7 +103,15 @@ class Client {
 
 	disconnect() {
 		var self = this;
-		self.socket.destroy();
+		if (self.idleTimer) {
+			clearTimeout(self.idleTimer);
+		}
+		if (self.requestTimer) {
+			clearTimeout(self.requestTimer);
+		}
+		if (self.connected && self.socket) {
+			self.socket.destroy();
+		}
 		self.connected = false;
 		self.socket = null;
 		if (self.pool) {
@@ -101,25 +141,36 @@ class Pool {
 		this.map = {};
 		this.queue = [];
 		this.maxQueueLength = options.maxQueueLength || 20;
-		
-
+		this.requestTimeout = options.requestTimeout || 3000;
+		this.idleTimeout = options.idleTimeout || 3000;
+		this.maxRequestsPerConnection = options.maxRequestsPerConnection || 1000;
+		this.pool = this;
 	}
 
 	processQueue() {
 		var self = this;
+		if (self.queue.length > 0 && (self.clientsCount < self.maxConnections)) {
+			setImmediate(function(){
+				self.openIdleConnections(1);
+			})
+		}
 		//console.log('queue length', self.queue.length);
 		while (self.queue.length > 0 && self.freeList.length > 0) {
 			//console.log('give from queue');
 			var cb = self.queue.shift();
-			console.log('popped from queue');
 			var client = self.freeList.shift();
-			process.nextTick(function () {
-				client.busy = true;
-				cb(null, client);
-			});
+			if (client.connected) {
+				if (client.idleTimer) {
+					clearTimeout(client.idleTimer);
+					client.idleTimer = null;
+				}
+				process.nextTick(function () {
+					client.busy = true;
+					cb(null, client);
+				});
+			}
 		}
 	}
-
 
 	openIdleConnections(n) {
 		var self = this;
@@ -139,24 +190,32 @@ class Pool {
 
 	getClient(cb) {
 		var self = this;
-		if (self.freeList.length) {
+		while (self.freeList.length) {
 			var client = self.freeList.shift();
-			process.nextTick(function () {
-				client.busy = true;
-				cb(null, client);
-			});
-		} else if (self.clientsCount < self.maxConnections) {
-			var client = new Client({
-				host: self.host,
-				port: self.port,
-				pool: self,
-			});
+			if (client.connected) {
+				if (client.idleTimer) {
+					clearTimeout(client.idleTimer);
+					client.idleTimer = null;
+				}
+				process.nextTick(function () {
+					client.busy = true;
+					cb(null, client);
+				});
+				return;
+			}
+		}
+
+		if (self.clientsCount < self.maxConnections) {
+			// New Client 
+			var client = new Client(self);
 			self.clientsCount++;
+			console.log('clientsCount up ', self.clientsCount, client.id);
 			self.clients[client.id] = client;
 			client.connect(function (err, me) {
 				if (err) {
 					self.clientsCount--;
 					delete self.clients[client.id];
+					console.log('clientsCount down on error ', self.clientsCount, client.id);
 					cb(err, null);
 				}
 				else {
@@ -168,6 +227,10 @@ class Pool {
 						client.disconnect();
 						self.release(client);
 					});
+					if (client.idleTimer) {
+						clearTimeout(client.idleTimer);
+						client.idleTimer = null;
+					}
 					process.nextTick(function () {
 						client.busy = true;
 						cb(null, client);
@@ -194,8 +257,39 @@ class Pool {
 			return
 		}
 		var client = self.clients[releaseClient.id];
-		if (client) {
-			if (client.connected) {
+		if (client && !client.connected) {
+			self.clientsCount--;
+			client.pool = null;
+			console.log('clientsCount down on release and disconnect ', self.clientsCount, client.id);
+			delete self.clients[client.id];
+			client = null;
+		}
+
+		if (client && client.connected) {
+			if (client.requestsCount >= client.maxRequestsPerConnection) {
+				console.log('close connection as maxRequestsPerConnection reached ', client.id);
+				client.pool = null;
+				client.requestsCount = 0;
+				client.disconnect();
+				self.clientsCount--;
+				console.log('clientsCount down on release and maxRequests reached ', self.clientsCount, client.id);
+				if (client.idleTimer) {
+					clearTimeout(client.idleTimer);
+					client.idleTimer = null;
+				}
+				delete self.clients[client.id];
+			}
+			else {
+				if (client.idleTimer) {
+					clearTimeout(client.idleTimer);
+					client.idleTimer = null;
+				}
+				if (client.idleTimeout) {
+					client.idleTimer = setTimeout(function () {
+						console.log('idle time happened');
+						client.disconnect();
+					}, client.idleTimeout);
+				}
 				client.busy = false;
 				self.freeList.push(client);
 				// till next send
@@ -205,19 +299,13 @@ class Pool {
 					client.disconnect();
 					self.release(client);
 				});
-				if (self.queue.length > 0) {
-					//console.log('process q on release');
-					setImmediate(function () {
-						self.processQueue();
-					})
-				}
-			} else {
-				delete self.clients[client.id];
-				self.clientsCount--;
 			}
 		}
-		if (self.queue.length > 0 && (self.clientsCount < self.maxConnections)) {
-			self.openIdleConnections(1);
+		if (self.queue.length > 0) {
+			//console.log('process q on release');
+			setImmediate(function () {
+				self.processQueue();
+			})
 		}
 	}
 }
