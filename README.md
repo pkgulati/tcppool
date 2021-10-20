@@ -49,6 +49,7 @@ One must consume full response, before releasing the client, as socket pool does
 |requestTimeout|3000| Request Time out in mili seconds, If server does not respond with in this time, connection is closed, and request fails|
 |idleTimeout|36000|Idle time out in mili seconds, Connection is closed, if there is no activity on socket |
 |maxRequestsPerConnection|1000|Connection is closed after every 1000 requests|
+|connectTimeout|Connection Time out|
 
 For opening x number idle connections, in start up, following method can be invoked
 ```js

@@ -7,7 +7,7 @@ class Client {
 		options = options || {};
 		this.host = options.host || 'localhost';
 		this.port = options.port || 8080;
-		this.socket = new net.Socket();
+		//this.socket = new net.Socket();
 		this.id = uuid.v4();
 		this.connected = false;
 		this.pool = options.pool;
@@ -17,38 +17,57 @@ class Client {
 		this.requestsCount = 0;
 	}
 
-	connect(cb) {
+	connect = function(timeout, cb) {
 		var self = this;
-		var connectErrorHandler = function (err) {
-			console.log('Connection Error');
-			cb(err)
-		};
-		self.socket.once('error', connectErrorHandler);
-		self.socket.connect(this.port, this.host, function () {
-			self.socket.removeListener('error', connectErrorHandler);
-			if (self.idleTimeout) {
-				self.idleTimer = setTimeout(function () {
-					console.log('idle time out happend');
-					self.disconnect();
-				}, self.idleTimeout);
-			}
-			self.connected = true;
-			cb(null, self);
-		});
-	}
+		var timer;
+		timeout = timeout || 3000;
+		try {
+			self.socket = new net.createConnection(self.port,self.ip);
+			self.socket.on('connect', function() {
+					clearTimeout(timer);
+					if (cb) {
+						self.connected = true;
+						cb(null, self);
+					}
+				})
+				.on('error', function(err) {
+					clearTimeout(timer);
+					if (err.code == "ENOTFOUND") {
+						console.log('No such address');
+						return;
+					}
+					cb(err);
+					if (err.code == "ECONNREFUSED") {
+						console.log("Connection refused! Please check the IP.");
+						return;
+					}
+					self.socket.destroy();
+				})
+				.on('disconnect', function() {
+					// self.emit disconnect
+				});
+				timer = setTimeout(function() {
+					self.socket.end();
+			}, timeout);
+		} catch(err) {
+			console.log("[CONNECTION] connection failed! " + err);
+			cb(err);
+		}
+	};
 
 	sendRequest(buf, receiver) {
 		// reconnect
 		var self = this;
 		this.requestsCount++;
 		if (!self.socket || !self.connected) {
-			console.log('client id ', client.id);
+			console.log('self id ', self.id);
 			var err = new Error('sendRequest on closed socket');
 			err.code = 'ERROR_SEND_ON_CLOSE_SOCKET';
 			return receiver(err);
 		}
 		self.socket.removeAllListeners('data');
 		self.socket.removeAllListeners('error');
+		
 		self.socket.on('data', function (data) {
 			if (self.requestTimer) {
 				clearTimeout(self.requestTimer);
@@ -71,7 +90,22 @@ class Client {
 				clearTimeout(self.idleTimer);
 				self.idleTimer = null;
 			}
-			self.disconnect();
+			receiver(err);
+			//self.disconnect();
+		});
+		self.socket.on('disconnect', function () {
+			console.log('error on socket ', err.Code);
+			if (self.requestTimer) {
+				clearTimeout(requestTimer);
+				self.requestTimer = null;
+			}
+			if (self.idleTimer) {
+				clearTimeout(self.idleTimer);
+				self.idleTimer = null;
+			}
+			var err = new Error('disconnected');
+			err.code = ERROR_SOCKET_DISCONNECTED;
+			receiver(err);
 		});
 		if (self.idleTimer) {
 			clearTimeout(self.idleTimer);
@@ -89,18 +123,6 @@ class Client {
 		}
 	}
 
-	// setListner(eventName, listener) {
-	// 	var self = this;
-	// 	this.socket.setListner(eventName, function (evt) {
-	// 		var event = {
-	// 			name : eventName,
-	// 			client: self,
-	// 			event: evt
-	// 		}
-	// 		listener(event);
-	// 	});
-	// }
-
 	disconnect() {
 		var self = this;
 		if (self.idleTimer) {
@@ -114,9 +136,6 @@ class Client {
 		}
 		self.connected = false;
 		self.socket = null;
-		if (self.pool) {
-			self.pool.release(self);
-		}
 	}
 
 	release() {
@@ -124,6 +143,7 @@ class Client {
 			this.pool.release(this);
 		}
 	}
+
 }
 
 var pq = 0;
@@ -143,6 +163,7 @@ class Pool {
 		this.maxQueueLength = options.maxQueueLength || 20;
 		this.requestTimeout = options.requestTimeout || 3000;
 		this.idleTimeout = options.idleTimeout || 3000;
+		this.connectTimeout = options.connectTimeout || 3000;
 		this.maxRequestsPerConnection = options.maxRequestsPerConnection || 1000;
 		this.pool = this;
 	}
@@ -211,7 +232,7 @@ class Pool {
 			self.clientsCount++;
 			console.log('clientsCount up ', self.clientsCount, client.id);
 			self.clients[client.id] = client;
-			client.connect(function (err, me) {
+			client.connect(self.connectTimeout, function (err, me) {
 				if (err) {
 					self.clientsCount--;
 					delete self.clients[client.id];
@@ -239,6 +260,7 @@ class Pool {
 			});
 		} else if (self.queue.length < self.maxQueueLength) {
 			console.log('pushed to queue ', typeof cb);
+			// TODO put a timer on get Client from queue
 			self.queue.push(cb);
 			setImmediate(function () {
 				self.processQueue();
@@ -310,5 +332,9 @@ class Pool {
 	}
 }
 
-module.exports = Pool;
+module.exports = {
+  Client : Client,
+  Pool : Pool
+}
+
 

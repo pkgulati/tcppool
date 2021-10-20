@@ -9,7 +9,7 @@ server.on('connection', handleConnection);
 var max_requests_count = 33;
 var required_tps = 7;
 
-var pool = new SocketPool({
+var pool = new SocketPool.Pool({
     idleTimeout: 20000,
     maxConnections: 2,
     maxQueueLength: 50,
